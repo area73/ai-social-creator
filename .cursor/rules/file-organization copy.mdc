@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+---
+description: Enforces keeping related files in appropriate directories, such as src/components, src/pages, etc.
+autoAttach:
+  - include: '**/*.ts'
+    reason: Applies to all TypeScript files.
+  - include: '**/*.astro'
+    reason: Applies to all Astro files.
+---
+# File Organization
+
+Keep related files in appropriate directories, such as `src/components`, `src/pages`, etc.
+
+Reference: [src directory](mdc:src)

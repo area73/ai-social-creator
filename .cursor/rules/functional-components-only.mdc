@@ -1,0 +1,20 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+---
+description: Enforces the use of functional components instead of class components in TypeScript and Astro files.
+autoAttach:
+  - include: '**/*.ts'
+    reason: Applies to all TypeScript files.
+  - include: '**/*.astro'
+    reason: Applies to all Astro files.
+---
+
+# Functional Components Only
+
+Use functional components instead of class components in `.ts` and `.astro` files.
+Do not use `class extends React.Component`.
+
+Reference: [src directory](mdc:src)

@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+---
+description: Enforces the use of TypeScript strict mode in all TypeScript files.
+autoAttach:
+  - include: '**/*.ts'
+    reason: Applies to all TypeScript files.
+---
+
+# TypeScript Strict Mode
+
+All TypeScript files must use strict mode.
+Check that `tsconfig.json` has `"strict": true`.
+
+Reference: [tsconfig.json](mdc:tsconfig.json)

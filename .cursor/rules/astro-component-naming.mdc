@@ -1,0 +1,17 @@
+---
+description:
+globs: **/*.astro
+alwaysApply: false
+---
+---
+description: Enforces PascalCase naming for Astro component filenames.
+autoAttach:
+  - include: '**/*.astro'
+    reason: Applies to all Astro component files.
+---
+# Astro Component Naming
+
+Astro component filenames must use PascalCase.
+Filenames must match the pattern: `^[A-Z][a-zA-Z0-9]*\.astro$`.
+
+Reference: [Astro components directory](mdc:src/components)

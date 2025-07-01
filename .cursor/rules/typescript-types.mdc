@@ -1,0 +1,18 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+---
+description: Enforces the use of explicit TypeScript types and forbids the use of `any` in TypeScript files.
+autoAttach:
+  - include: '**/*.ts'
+    reason: Applies to all TypeScript files.
+---
+
+# TypeScript Types
+
+Do not use the `any` type in TypeScript files.
+Use explicit TypeScript types instead.
+
+Reference: [src directory](mdc:src)

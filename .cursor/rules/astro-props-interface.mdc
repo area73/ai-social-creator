@@ -1,0 +1,18 @@
+---
+description:
+globs: **/*.astro
+alwaysApply: false
+---
+---
+description: Enforces defining props using TypeScript interfaces in `.astro` files, specifically looking for `interface Props` in each component.
+autoAttach:
+  - include: '**/*.astro'
+    reason: Applies to all Astro component files.
+---
+
+# Astro Props Interface
+
+Define props using TypeScript interfaces in `.astro` files.
+Look for `interface Props` in each component.
+
+Reference: [Astro components directory](mdc:src/components)
