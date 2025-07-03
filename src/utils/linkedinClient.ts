@@ -15,7 +15,7 @@ export const getLinkedInAuthUrl = ({
   clientId,
   redirectUri,
   state,
-  scope = "w_member_social",
+  scope = "openid profile r_events email rw_events",
 }: LinkedInAuthParams): string => {
   const params = new URLSearchParams({
     response_type: "code",
