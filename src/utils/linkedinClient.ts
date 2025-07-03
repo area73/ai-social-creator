@@ -3,6 +3,7 @@ export const LINKEDIN_AUTH_URL =
 export const LINKEDIN_TOKEN_URL =
   "https://www.linkedin.com/oauth/v2/accessToken";
 export const LINKEDIN_POST_URL = "https://api.linkedin.com/v2/ugcPosts";
+export const LINKEDIN_PROFILE_URL = "https://api.linkedin.com/v2/people/~";
 
 export interface LinkedInAuthParams {
   clientId: string;
@@ -15,7 +16,7 @@ export const getLinkedInAuthUrl = ({
   clientId,
   redirectUri,
   state,
-  scope = "r_liteprofile r_emailaddress w_member_social",
+  scope = "openid profile r_events w_member_social email rw_events",
 }: LinkedInAuthParams): string => {
   const params = new URLSearchParams({
     response_type: "code",
@@ -59,6 +60,31 @@ export const exchangeCodeForToken = async ({
   });
   if (!response.ok) {
     throw new Error(`LinkedIn token error: ${response.statusText}`);
+  }
+  return response.json();
+};
+
+export interface LinkedInProfile {
+  id: string;
+  firstName: {
+    localized: Record<string, string>;
+  };
+  lastName: {
+    localized: Record<string, string>;
+  };
+}
+
+export const getLinkedInProfile = async (
+  accessToken: string
+): Promise<LinkedInProfile> => {
+  const response = await fetch(LINKEDIN_PROFILE_URL, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`LinkedIn profile error: ${response.statusText}`);
   }
   return response.json();
 };

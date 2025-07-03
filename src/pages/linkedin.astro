@@ -1,6 +1,8 @@
 ---
 import "../styles/global.css";
 import Layout from "../layouts/Layout.astro";
+import LinkedInConnect from "../components/LinkedInConnect";
+import LinkedInPublisher from "../components/LinkedInPublisher";
 ---
 
 <Layout>
@@ -12,7 +14,13 @@ import Layout from "../layouts/Layout.astro";
   >
     LinkedIn
   </h1>
-  <p class="text-lg text-gray-600 font-sans">
-    This is the LinkedIn page. More features coming soon.
+  <p class="text-lg text-gray-600 font-sans mb-6">
+    Conecta tu cuenta de LinkedIn para poder publicar directamente desde la
+    aplicación.
   </p>
+  <LinkedInConnect client:load />
+
+  <div class="mt-8">
+    <LinkedInPublisher client:load />
+  </div>
 </Layout>
