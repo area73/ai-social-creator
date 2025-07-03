@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { postToLinkedIn, getLinkedInProfile } from "../utils/linkedinClient";
-import type { LinkedInProfile } from "../utils/linkedinClient";
 
 const CONFIG_KEY = "ai-social-creator-config";
 
@@ -25,25 +23,14 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
-  const [userUrn, setUserUrn] = useState<string | null>(null);
-  const [profile, setProfile] = useState<LinkedInProfile | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const config = getConfig();
   const token = config["LINKEDIN_TOKEN"];
 
   useEffect(() => {
-    if (token && !userUrn) {
-      // Get user profile to extract URN
-      getLinkedInProfile(token)
-        .then((profileData) => {
-          setProfile(profileData);
-          setUserUrn(`urn:li:person:${profileData.id}`);
-        })
-        .catch((err) => {
-          setError("Error obteniendo el perfil de LinkedIn");
-        });
-    }
-  }, [token, userUrn]);
+    setMounted(true);
+  }, []);
 
   const handlePublish = async () => {
     if (!text.trim()) {
@@ -54,33 +41,43 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
       setError("No hay token de LinkedIn. Conecta tu cuenta primero.");
       return;
     }
-    if (!userUrn) {
-      setError("No se pudo obtener el URN del usuario");
-      return;
-    }
 
     setStatus("loading");
     setError(null);
 
     try {
-      const response = await postToLinkedIn({
-        accessToken: token,
-        authorUrn: userUrn,
-        text,
+      // Use our server endpoint instead of direct LinkedIn API calls
+      const response = await fetch("/api/linkedin/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessToken: token,
+          text: text,
+        }),
       });
+
+      const result = await response.json();
 
       if (response.ok) {
         setStatus("success");
         setText(""); // Clear the form
       } else {
+        console.error("LinkedIn post error:", result);
         setStatus("error");
-        setError("Error publicando en LinkedIn");
+        setError(result.error || "Error publicando en LinkedIn");
       }
     } catch (err) {
+      console.error("Post error:", err);
       setStatus("error");
       setError("Error publicando en LinkedIn");
     }
   };
+
+  if (!mounted) {
+    return <div>Cargando...</div>;
+  }
 
   if (!token) {
     return (
@@ -96,14 +93,9 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     <div className="max-w-2xl mx-auto p-4">
       <h2 className="text-2xl font-bold mb-4">Publicar en LinkedIn</h2>
 
-      {profile && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
-          <p className="text-blue-800">
-            Conectado como: {Object.values(profile.firstName.localized)[0]}{" "}
-            {Object.values(profile.lastName.localized)[0]}
-          </p>
-        </div>
-      )}
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+        <p className="text-blue-800">Conectado con LinkedIn ✓</p>
+      </div>
 
       <div className="mb-4">
         <label className="block text-sm font-medium mb-2">
