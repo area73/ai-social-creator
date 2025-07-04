@@ -17,6 +17,20 @@ const getOpenAIApiKey = (): string | null => {
 
 const DEFAULT_MODEL: OpenAIModel = "gpt-3.5-turbo";
 
+// Pure helpers
+const buildUserMessage = (content: string): OpenAIMessage => ({
+  role: "user",
+  content,
+});
+const buildAIMessage = (content: string): OpenAIMessage => ({
+  role: "assistant",
+  content,
+});
+const appendMessage = (
+  messages: OpenAIMessage[],
+  message: OpenAIMessage
+): OpenAIMessage[] => [...messages, message];
+
 const ChatWithAI: React.FC = () => {
   const [messages, setMessages] = useState<OpenAIMessage[]>([]);
   const [input, setInput] = useState("");
@@ -26,27 +40,24 @@ const ChatWithAI: React.FC = () => {
 
   const apiKey = getOpenAIApiKey();
 
+  // Side effect: send message to OpenAI
   const handleSend = async () => {
     if (!input.trim() || !apiKey) return;
     setLoading(true);
     setError(null);
-    const userMessage: OpenAIMessage = { role: "user", content: input };
-    const newMessages: OpenAIMessage[] = [...messages, userMessage];
+    const userMessage = buildUserMessage(input);
+    const newMessages = appendMessage(messages, userMessage);
     setMessages(newMessages);
     setInput("");
     try {
-      const response: OpenAIResponse = await sendMessageToOpenAI(
+      const response = await sendMessageToOpenAI(
         newMessages,
         apiKey,
         OPENAI_API_URL,
         model
       );
-      const aiMessage: OpenAIMessage = {
-        role: "assistant",
-        content: response.content,
-      };
-      setMessages([...newMessages, aiMessage]);
-    } catch (err) {
+      setMessages(appendMessage(newMessages, buildAIMessage(response.content)));
+    } catch {
       setError("Error al conectar con OpenAI");
     } finally {
       setLoading(false);

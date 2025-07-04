@@ -15,23 +15,32 @@ export const sendMessageToOpenAI = async (
   apiUrl: OpenAIApiUrl,
   model: OpenAIModel
 ): Promise<OpenAIResponse> => {
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages,
-    }),
+  // Pure helper to build request body
+  const buildRequestBody = (model: OpenAIModel, messages: OpenAIMessage[]) => ({
+    model,
+    messages,
   });
 
-  if (!response.ok) {
-    throw new Error(`OpenAI API error: ${response.statusText}`);
-  }
+  // Side effect: fetch OpenAI
+  const fetchOpenAI = async () => {
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify(buildRequestBody(model, messages)),
+    });
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.statusText}`);
+    }
+    return response.json();
+  };
 
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content ?? "";
-  return { content };
+  // Pure helper to extract content
+  const extractContent = (data: any): string =>
+    data.choices?.[0]?.message?.content ?? "";
+
+  const data = await fetchOpenAI();
+  return { content: extractContent(data) };
 };

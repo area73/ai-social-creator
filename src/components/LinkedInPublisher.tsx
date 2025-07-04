@@ -15,6 +15,25 @@ interface LinkedInPublisherProps {
   initialText?: string;
 }
 
+// Pure helpers
+function getConfigToken(): string | null {
+  try {
+    const raw = localStorage.getItem(CONFIG_KEY);
+    if (!raw) return null;
+    const config = JSON.parse(raw);
+    return config["LINKEDIN_TOKEN"] || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildPublishBody(token: string, text: string) {
+  return {
+    accessToken: token,
+    text,
+  };
+}
+
 const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
   initialText = "",
 }) => {
@@ -25,30 +44,15 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  // Update token state when component mounts or localStorage changes
   useEffect(() => {
-    const updateToken = () => {
-      const config = getConfig();
-      setToken(config["LINKEDIN_TOKEN"] || null);
-    };
-
-    updateToken(); // Initial load
-
-    // Listen for storage changes (when token is updated by LinkedInConnect)
+    const updateToken = () => setToken(getConfigToken());
+    updateToken();
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === CONFIG_KEY) {
-        updateToken();
-      }
+      if (e.key === CONFIG_KEY) updateToken();
     };
-
-    // Listen for custom storage events (for same-tab updates)
-    const handleCustomStorageChange = () => {
-      updateToken();
-    };
-
+    const handleCustomStorageChange = () => updateToken();
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("localStorageUpdate", handleCustomStorageChange);
-
     return () => {
       cleanupLinkedInPublisherListeners(
         handleStorageChange,
@@ -57,6 +61,7 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     };
   }, []);
 
+  // Side effect: publicar post
   const handlePublish = async () => {
     if (!text.trim()) {
       setError("El texto no puede estar vacío");
@@ -66,28 +71,18 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
       setError("No hay token de LinkedIn. Conecta tu cuenta primero.");
       return;
     }
-
     setStatus("loading");
     setError(null);
-
     try {
-      // Use our server endpoint instead of direct LinkedIn API calls
       const response = await fetch("/api/linkedin/publish", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          accessToken: token,
-          text: text,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildPublishBody(token, text)),
       });
-
       const result = await response.json();
-
       if (response.ok) {
         setStatus("success");
-        setText(""); // Clear the form
+        setText("");
       } else {
         console.error("LinkedIn post error:", result);
         setStatus("error");

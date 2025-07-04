@@ -28,6 +28,26 @@ function setConfigValue(key: string, value: string) {
   );
 }
 
+// Pure helpers
+function getConfigValue(key: string): string | null {
+  const config = getConfig();
+  return config[key] || null;
+}
+
+function buildRedirectUri(): string {
+  return typeof window !== "undefined"
+    ? `${window.location.origin}/linkedin`
+    : "";
+}
+
+function buildAuthUrl(clientId: string, redirectUri: string): string {
+  return getLinkedInAuthUrl({
+    clientId,
+    redirectUri,
+    state: Math.random().toString(36).slice(2),
+  });
+}
+
 const LinkedInConnect: React.FC = () => {
   const [status, setStatus] = useState<
     "idle" | "connecting" | "connected" | "error"
@@ -40,9 +60,7 @@ const LinkedInConnect: React.FC = () => {
   const token = config["LINKEDIN_TOKEN"];
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setRedirectUri(`${window.location.origin}/linkedin`);
-    }
+    setRedirectUri(buildRedirectUri());
   }, []);
 
   useEffect(() => {
@@ -93,13 +111,8 @@ const LinkedInConnect: React.FC = () => {
       setError("Falta el Client ID de LinkedIn en la configuración");
       return;
     }
-    const uri =
-      typeof window !== "undefined" ? `${window.location.origin}/linkedin` : "";
-    const authUrl = getLinkedInAuthUrl({
-      clientId,
-      redirectUri: uri,
-      state: Math.random().toString(36).slice(2),
-    });
+    const uri = buildRedirectUri();
+    const authUrl = buildAuthUrl(clientId, uri);
     window.location.href = authUrl;
   };
 

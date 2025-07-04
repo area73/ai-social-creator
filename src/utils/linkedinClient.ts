@@ -103,87 +103,73 @@ export const postToLinkedIn = async ({
   authorUrn: string;
   text: string;
 }): Promise<Response> => {
-  // If using generic URN, get the actual user URN
-  let actualAuthorUrn = authorUrn;
+  // Pure helper to build UGC post body
+  const buildUgcPostBody = (authorUrn: string, text: string) => ({
+    author: authorUrn,
+    lifecycleState: "PUBLISHED",
+    specificContent: {
+      "com.linkedin.ugc.ShareContent": {
+        shareCommentary: { text },
+        shareMediaCategory: "NONE",
+      },
+    },
+    visibility: {
+      "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
+    },
+  });
+
+  // Pure helper to build Shares API body
+  const buildSharesBody = (text: string) => ({
+    content: {
+      contentEntities: [],
+      title: text.substring(0, 100),
+    },
+    distribution: {
+      linkedInDistributionTarget: {},
+    },
+    text: { text },
+  });
+
+  // Side effect: fetch profile
+  const fetchProfile = async () => {
+    const response = await fetch(`${LINKEDIN_API_URL}/v2/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error("Profile fetch failed");
+    return response.json();
+  };
+
+  // Side effect: post to UGC
+  const postUgc = (authorUrn: string) =>
+    fetch(`${LINKEDIN_API_URL}/v2/ugcPosts`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildUgcPostBody(authorUrn, text)),
+    });
+
+  // Side effect: post to Shares
+  const postShares = () =>
+    fetch(`${LINKEDIN_API_URL}/v2/shares`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(buildSharesBody(text)),
+    });
+
   if (authorUrn === "urn:li:person:CURRENT_USER") {
     try {
-      const profileResponse = await fetch(`${LINKEDIN_API_URL}/v2/me`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (profileResponse.ok) {
-        const profile = await profileResponse.json();
-        actualAuthorUrn = `urn:li:person:${profile.id}`;
-      } else {
-        // If we can't get the profile, try with a different approach
-        // Use the simplified sharing endpoint
-        return fetch(`${LINKEDIN_API_URL}/v2/shares`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: {
-              contentEntities: [],
-              title: text.substring(0, 100), // First 100 chars as title
-            },
-            distribution: {
-              linkedInDistributionTarget: {},
-            },
-            text: {
-              text: text,
-            },
-          }),
-        });
-      }
+      return fetchProfile()
+        .then((profile) => postUgc(`urn:li:person:${profile.id}`))
+        .catch(() => postShares());
     } catch (error) {
-      console.error("Error getting profile for URN:", error);
-      // Fall back to simplified sharing
-      return fetch(`${LINKEDIN_API_URL}/v2/shares`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: {
-            contentEntities: [],
-            title: text.substring(0, 100),
-          },
-          distribution: {
-            linkedInDistributionTarget: {},
-          },
-          text: {
-            text: text,
-          },
-        }),
-      });
+      // fallback if fetchProfile throws synchronously (shouldn't happen)
+      return postShares();
     }
   }
-
-  return fetch(`${LINKEDIN_API_URL}/v2/ugcPosts`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      author: actualAuthorUrn,
-      lifecycleState: "PUBLISHED",
-      specificContent: {
-        "com.linkedin.ugc.ShareContent": {
-          shareCommentary: {
-            text: text,
-          },
-          shareMediaCategory: "NONE",
-        },
-      },
-      visibility: {
-        "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-      },
-    }),
-  });
+  return postUgc(authorUrn);
 };
