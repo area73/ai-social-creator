@@ -56,8 +56,14 @@ const ChatWithAI: React.FC = () => {
   return (
     <div className="mx-auto p-4 bg-white rounded shadow">
       <div className="mb-2">
-        <label className="block text-sm font-medium mb-1">Modelo:</label>
+        <label
+          htmlFor="model-select"
+          className="block text-sm font-medium mb-1"
+        >
+          Modelo:
+        </label>
         <select
+          id="model-select"
           value={model}
           onChange={(e) => setModel(e.target.value as OpenAIModel)}
           className="border rounded px-2 py-1"
