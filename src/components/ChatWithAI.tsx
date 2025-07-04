@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { sendMessageToOpenAI } from "../utils/openaiClient";
 import { OPENAI_API_URL, OPENAI_MODELS } from "../utils/resources";
 import type { OpenAIMessage, OpenAIResponse } from "../utils/openaiClient";
@@ -37,8 +37,11 @@ const ChatWithAI: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [model, setModel] = useState<OpenAIModel>(DEFAULT_MODEL);
+  const [apiKey, setApiKey] = useState<string | null>(null);
 
-  const apiKey = getOpenAIApiKey();
+  useEffect(() => {
+    setApiKey(getOpenAIApiKey());
+  }, []);
 
   // Side effect: send message to OpenAI
   const handleSend = async () => {
