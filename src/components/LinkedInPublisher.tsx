@@ -23,7 +23,6 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [error, setError] = useState<string | null>(null);
-  const [mounted, setMounted] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
   // Update token state when component mounts or localStorage changes
@@ -34,7 +33,6 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     };
 
     updateToken(); // Initial load
-    setMounted(true);
 
     // Listen for storage changes (when token is updated by LinkedInConnect)
     const handleStorageChange = (e: StorageEvent) => {
@@ -52,9 +50,8 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     window.addEventListener("localStorageUpdate", handleCustomStorageChange);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener(
-        "localStorageUpdate",
+      cleanupLinkedInPublisherListeners(
+        handleStorageChange,
         handleCustomStorageChange
       );
     };
@@ -102,10 +99,6 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
       setError("Error publicando en LinkedIn");
     }
   };
-
-  if (!mounted) {
-    return <div>Cargando...</div>;
-  }
 
   if (!token) {
     return (
@@ -162,5 +155,13 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
     </div>
   );
 };
+
+export function cleanupLinkedInPublisherListeners(
+  handleStorageChange: (e: StorageEvent) => void,
+  handleCustomStorageChange: () => void
+) {
+  window.removeEventListener("storage", handleStorageChange);
+  window.removeEventListener("localStorageUpdate", handleCustomStorageChange);
+}
 
 export default LinkedInPublisher;

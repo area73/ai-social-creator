@@ -1,7 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import LinkedInPublisher from "../LinkedInPublisher";
+import LinkedInPublisher, {
+  cleanupLinkedInPublisherListeners,
+} from "../LinkedInPublisher";
 
 // Mock fetch globally
 const mockFetch = vi.fn();
@@ -487,5 +489,75 @@ describe("LinkedInPublisher", () => {
     window.dispatchEvent(new CustomEvent("localStorageUpdate"));
     // Si no hay errores, el test pasa
     expect(true).toBe(true);
+  });
+
+  it("removes event listeners on unmount (coverage, listeners exist)", () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+    const { unmount } = render(<LinkedInPublisher />);
+    unmount();
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "storage",
+      expect.any(Function)
+    );
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "localStorageUpdate",
+      expect.any(Function)
+    );
+    removeEventListenerSpy.mockRestore();
+  });
+
+  it("cleanup does not throw if listeners were never added (coverage)", () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    // Simula removeEventListener que no hace nada
+    const originalRemove = window.removeEventListener;
+    window.removeEventListener = vi.fn();
+    const { unmount } = render(<LinkedInPublisher />);
+    unmount();
+    // No debe lanzar error aunque los listeners no existan
+    expect(true).toBe(true);
+    window.removeEventListener = originalRemove;
+  });
+});
+
+describe("cleanupLinkedInPublisherListeners", () => {
+  it("calls removeEventListener for both events", () => {
+    const storageHandler = vi.fn();
+    const customHandler = vi.fn();
+    const removeSpy = vi.spyOn(window, "removeEventListener");
+    cleanupLinkedInPublisherListeners(storageHandler, customHandler);
+    expect(removeSpy).toHaveBeenCalledWith("storage", storageHandler);
+    expect(removeSpy).toHaveBeenCalledWith("localStorageUpdate", customHandler);
+    removeSpy.mockRestore();
+  });
+  it("does not throw if removeEventListener is a no-op", () => {
+    const storageHandler = vi.fn();
+    const customHandler = vi.fn();
+    const originalRemove = window.removeEventListener;
+    window.removeEventListener = vi.fn();
+    expect(() =>
+      cleanupLinkedInPublisherListeners(storageHandler, customHandler)
+    ).not.toThrow();
+    window.removeEventListener = originalRemove;
   });
 });
