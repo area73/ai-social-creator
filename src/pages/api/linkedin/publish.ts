@@ -11,126 +11,77 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    // Try the shares endpoint first (doesn't require member URN)
-    const shareResponse = await fetch("https://api.linkedin.com/v2/shares", {
+    // First, get the user ID as shown in the article
+    const userInfoResponse = await fetch(
+      "https://api.linkedin.com/v2/userinfo",
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!userInfoResponse.ok) {
+      const error = await userInfoResponse.text();
+      console.error("Failed to get user info:", userInfoResponse.status, error);
+      return new Response(
+        JSON.stringify({
+          error: "Failed to get user profile",
+          details: error,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const userInfo = await userInfoResponse.json();
+    const userId = userInfo.sub; // The user ID is in the 'sub' field
+
+    console.log("User info:", userInfo);
+
+    // Now publish the post using the exact format from the article
+    const ugcResponse = await fetch("https://api.linkedin.com/v2/ugcPosts", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        content: {
-          contentEntities: [],
-          title: text.substring(0, 100), // First 100 chars as title
+        author: `urn:li:person:${userId}`, // Use the exact format from the article
+        lifecycleState: "PUBLISHED",
+        specificContent: {
+          "com.linkedin.ugc.ShareContent": {
+            shareCommentary: {
+              text: text,
+            },
+            shareMediaCategory: "NONE", // For text-only posts
+          },
         },
-        distribution: {
-          linkedInDistributionTarget: {},
-        },
-        text: {
-          text: text,
+        visibility: {
+          "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
         },
       }),
     });
 
-    if (shareResponse.ok) {
-      const result = await shareResponse.json();
-      return new Response(JSON.stringify(result), {
+    if (ugcResponse.ok) {
+      const result = await ugcResponse.json();
+      return new Response(JSON.stringify({ success: true, data: result }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // If shares fails, try UGC posts with different author formats
-    const ugcAttempts = [
-      "urn:li:person:~", // Try the tilde approach
-      "urn:li:member:~", // Try member with tilde
-    ];
-
-    for (const authorUrn of ugcAttempts) {
-      const ugcResponse = await fetch("https://api.linkedin.com/v2/ugcPosts", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-          "X-Restli-Protocol-Version": "2.0.0",
-        },
-        body: JSON.stringify({
-          author: authorUrn,
-          lifecycleState: "PUBLISHED",
-          specificContent: {
-            "com.linkedin.ugc.ShareContent": {
-              shareCommentary: {
-                text: text,
-              },
-              shareMediaCategory: "NONE",
-            },
-          },
-          visibility: {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC",
-          },
-        }),
-      });
-
-      if (ugcResponse.ok) {
-        const result = await ugcResponse.json();
-        return new Response(JSON.stringify(result), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      // Log the error but continue to next attempt
-      const ugcError = await ugcResponse.text();
-      console.log(
-        `UGC attempt with ${authorUrn} failed:`,
-        ugcResponse.status,
-        ugcError
-      );
-    }
-
-    // If all UGC attempts fail, try a simpler text-only post using shares
-    const simpleShareResponse = await fetch(
-      "https://api.linkedin.com/v2/shares",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: {
-            contentEntities: [],
-          },
-          distribution: {
-            linkedInDistributionTarget: {},
-          },
-          text: {
-            text: text,
-          },
-        }),
-      }
-    );
-
-    if (simpleShareResponse.ok) {
-      const result = await simpleShareResponse.json();
-      return new Response(JSON.stringify(result), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // If everything fails, return the error from the first shares attempt
-    const shareError = await shareResponse.text();
-    console.error(
-      "All LinkedIn post attempts failed. Last error:",
-      simpleShareResponse.status,
-      await simpleShareResponse.text()
-    );
+    // Get detailed error for debugging
+    const ugcError = await ugcResponse.text();
+    console.error("UGC API error:", ugcResponse.status, ugcError);
 
     return new Response(
       JSON.stringify({
         error: "Failed to publish post",
-        details: `Status: ${shareResponse.status}, Error: ${shareError}`,
+        details: {
+          status: ugcResponse.status,
+          error: ugcError,
+        },
       }),
       { status: 400, headers: { "Content-Type": "application/json" } }
     );
