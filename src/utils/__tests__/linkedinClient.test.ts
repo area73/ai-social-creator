@@ -306,5 +306,29 @@ describe("linkedinClient", () => {
         }
       );
     });
+
+    it("falls back to shares API if profile fetch throws", async () => {
+      // Mock profile fetch throws
+      mockFetch.mockRejectedValueOnce(new Error("network fail"));
+      // Mock shares API success
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: "share-999" }),
+      });
+      const params = {
+        accessToken: "test-access-token",
+        authorUrn: "urn:li:person:CURRENT_USER",
+        text: "Test post content",
+      };
+      const result = await postToLinkedIn(params);
+      expect(result.ok).toBe(true);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      // Second call should be to shares API
+      expect(mockFetch).toHaveBeenNthCalledWith(
+        2,
+        "https://api.linkedin.com/v2/shares",
+        expect.objectContaining({ method: "POST" })
+      );
+    });
   });
 });

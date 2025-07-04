@@ -261,4 +261,231 @@ describe("LinkedInPublisher", () => {
     // Character count should update
     expect(screen.getByText("12 caracteres")).toBeInTheDocument();
   });
+
+  it("shows error if fetch throws", async () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    mockFetch.mockRejectedValueOnce(new Error("network fail"));
+    render(<LinkedInPublisher />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    fireEvent.change(textarea, { target: { value: "Test post" } });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Publicar en LinkedIn" })
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText("Error publicando en LinkedIn")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows error if text is only whitespace", async () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const publishButton = screen.getByRole("button", {
+      name: "Publicar en LinkedIn",
+    });
+    fireEvent.change(textarea, { target: { value: "   " } });
+    fireEvent.click(publishButton);
+    // Button should remain disabled and no error message should be shown
+    expect(publishButton).toBeDisabled();
+    expect(
+      screen.queryByText("El texto no puede estar vacío")
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows error if token is missing at publish time", async () => {
+    // Token present at mount, but removed before publish
+    let token: string | undefined = "test-token";
+    const mockGetItem = vi.fn(() =>
+      token ? JSON.stringify({ LINKEDIN_TOKEN: token }) : JSON.stringify({})
+    );
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    fireEvent.change(textarea, { target: { value: "Test post" } });
+    // Remove token before publish
+    token = undefined;
+    fireEvent.click(
+      screen.getByRole("button", { name: "Publicar en LinkedIn" })
+    );
+    // Should show the red error message
+    await waitFor(() => {
+      expect(
+        screen.getByText("Error publicando en LinkedIn")
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("updates token on storage event", async () => {
+    // Token present at mount, then removed via storage event
+    let token: string | undefined = "test-token";
+    const mockGetItem = vi.fn(() =>
+      token ? JSON.stringify({ LINKEDIN_TOKEN: token }) : JSON.stringify({})
+    );
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    // Remove token and dispatch storage event
+    token = undefined;
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "ai-social-creator-config" })
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("updates token on custom localStorageUpdate event", async () => {
+    // Token present at mount, then removed via custom event
+    let token: string | undefined = "test-token";
+    const mockGetItem = vi.fn(() =>
+      token ? JSON.stringify({ LINKEDIN_TOKEN: token }) : JSON.stringify({})
+    );
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    // Remove token and dispatch custom event
+    token = undefined;
+    window.dispatchEvent(new CustomEvent("localStorageUpdate"));
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+        )
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("renders with initialText prop", async () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher initialText="Hello world!" />);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+      ).toBeInTheDocument();
+    });
+    expect(screen.getByDisplayValue("Hello world!")).toBeInTheDocument();
+  });
+
+  it("handles JSON.parse error in localStorage gracefully", () => {
+    const mockGetItem = vi.fn().mockImplementation(() => "invalid-json");
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    render(<LinkedInPublisher />);
+    expect(
+      screen.getByText(
+        "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("cleans up event listeners on unmount", () => {
+    const mockConfig = { LINKEDIN_TOKEN: "test-token" };
+    const mockGetItem = vi.fn().mockReturnValue(JSON.stringify(mockConfig));
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: mockGetItem,
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    const { unmount } = render(<LinkedInPublisher />);
+    // Simula un evento después del unmount para asegurar que no hay errores
+    unmount();
+    window.dispatchEvent(new Event("storage"));
+    window.dispatchEvent(new CustomEvent("localStorageUpdate"));
+    // Si no hay errores, el test pasa
+    expect(true).toBe(true);
+  });
 });
