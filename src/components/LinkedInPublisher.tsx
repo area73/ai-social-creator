@@ -24,12 +24,40 @@ const LinkedInPublisher: React.FC<LinkedInPublisherProps> = ({
   >("idle");
   const [error, setError] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
-  const config = getConfig();
-  const token = config["LINKEDIN_TOKEN"];
-
+  // Update token state when component mounts or localStorage changes
   useEffect(() => {
+    const updateToken = () => {
+      const config = getConfig();
+      setToken(config["LINKEDIN_TOKEN"] || null);
+    };
+
+    updateToken(); // Initial load
     setMounted(true);
+
+    // Listen for storage changes (when token is updated by LinkedInConnect)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === CONFIG_KEY) {
+        updateToken();
+      }
+    };
+
+    // Listen for custom storage events (for same-tab updates)
+    const handleCustomStorageChange = () => {
+      updateToken();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("localStorageUpdate", handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "localStorageUpdate",
+        handleCustomStorageChange
+      );
+    };
   }, []);
 
   const handlePublish = async () => {

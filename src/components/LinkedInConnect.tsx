@@ -19,6 +19,13 @@ function setConfigValue(key: string, value: string) {
   const config = getConfig();
   config[key] = value;
   localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+
+  // Dispatch custom event to notify other components
+  window.dispatchEvent(
+    new CustomEvent("localStorageUpdate", {
+      detail: { key, value },
+    })
+  );
 }
 
 const LinkedInConnect: React.FC = () => {
