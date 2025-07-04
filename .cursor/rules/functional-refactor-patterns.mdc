@@ -1,0 +1,176 @@
+---
+description: Functional refactoring patterns — general purpose, framework-agnostic, focused on purity, immutability, composition, and side-effect isolation.
+alwaysApply: false
+---
+
+description: A collection of refactoring patterns to apply functional principles across any codebase. Covers state mutation, side effects, control flow, shared state, and monolithic logic.
+autoAttach:
+
+- include: "\*_/_"
+  reason: Applicable to any file containing logic or transformation.
+
+---
+
+# Functional Refactoring Patterns
+
+This rule groups common refactoring strategies to evolve imperative or legacy code into cleaner, more declarative, composable functional structures.
+
+---
+
+## ✅ 1. Replace Mutable State with Immutable Transformations
+
+Refactor imperative state updates (e.g., `push`, `splice`, `let`) into immutable transformations like `map`, `filter`, `reduce`.
+
+### ❌ Imperative
+
+```js
+let items = [];
+for (let i = 0; i < list.length; i++) {
+  if (list[i].active) items.push(list[i].value);
+}
+```
+
+### ✅ Functional
+
+```js
+const items = list.filter((x) => x.active).map((x) => x.value);
+```
+
+### Prompt
+
+```txt
+Rewrite this logic to avoid mutation. Use pure transformations such as map, filter, reduce.
+```
+
+---
+
+## ✅ 2. Isolate Side Effects
+
+Side effects (e.g., `fetch`, `console`, DOM access) should not be mixed with core business logic.
+
+### ❌ Mixed logic
+
+```ts
+function getUserName(id) {
+  const res = fetch(`/api/${id}`);
+  return res.json().name;
+}
+```
+
+### ✅ Separated
+
+```ts
+function parseUser(data) {
+  return data.name;
+}
+
+async function fetchUser(id) {
+  const res = await fetch(`/api/${id}`);
+  const data = await res.json();
+  return parseUser(data);
+}
+```
+
+### Prompt
+
+```txt
+Identify and isolate side effects from the rest of this function. Separate logic into pure functions and impure wrappers.
+```
+
+---
+
+## ✅ 3. Eliminate Shared Mutable State
+
+Avoid relying on external closures or shared mutables — they break purity and cause hidden dependencies.
+
+### ❌ Anti-pattern
+
+```js
+let counter = 0;
+function increment() {
+  counter++;
+}
+```
+
+### ✅ Pure version
+
+```js
+function increment(n) {
+  return n + 1;
+}
+```
+
+### Prompt
+
+```txt
+Remove shared mutable state from this code. Replace it with explicit parameters and return values.
+```
+
+---
+
+## ✅ 4. Collapse Nested Control Flow
+
+Unnest `if`, `for`, or `switch` structures using declarative functional methods.
+
+### ❌ Nested
+
+```js
+let result = [];
+for (const x of data) {
+  if (x.active) {
+    for (const y of x.items) {
+      if (y.visible) {
+        result.push(y.id);
+      }
+    }
+  }
+}
+```
+
+### ✅ Flattened
+
+```js
+const result = data
+  .filter((x) => x.active)
+  .flatMap((x) => x.items.filter((y) => y.visible).map((y) => y.id));
+```
+
+### Prompt
+
+```txt
+Collapse nested control structures into declarative transformations using functional methods.
+```
+
+---
+
+## ✅ 5. Refactor Monolithic Functions into Pipelines
+
+Split large logic blocks into small composable functions.
+
+### ❌ Monolithic
+
+```js
+function processUser(data) {
+  const user = JSON.parse(data);
+  const name = user.name.trim().toUpperCase();
+  return name.split(" ")[0];
+}
+```
+
+### ✅ Functional Pipeline
+
+```js
+const parse = JSON.parse;
+const formatName = (user) => user.name.trim().toUpperCase();
+const extractFirst = (name) => name.split(" ")[0];
+
+const processUser = (data) => extractFirst(formatName(parse(data)));
+```
+
+### Prompt
+
+```txt
+Break this function into smaller, pure steps that can be composed into a pipeline.
+```
+
+---
