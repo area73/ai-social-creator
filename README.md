@@ -1,6 +1,6 @@
 # AI Social Creator
 
-Aplicación para crear y publicar contenido en redes sociales usando IA, construida con Astro y React.
+Application to create and publish content on social networks using AI, built with Astro and React.
 
 ```sh
 pnpm create astro@latest -- --template minimal

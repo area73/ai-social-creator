@@ -61,7 +61,7 @@ const ChatWithAI: React.FC = () => {
       );
       setMessages(appendMessage(newMessages, buildAIMessage(response.content)));
     } catch {
-      setError("Error al conectar con OpenAI");
+      setError("Error connecting to OpenAI");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ const ChatWithAI: React.FC = () => {
           htmlFor="model-select"
           className="block text-sm font-medium mb-1"
         >
-          Modelo:
+          Model:
         </label>
         <select
           id="model-select"
@@ -91,7 +91,7 @@ const ChatWithAI: React.FC = () => {
       </div>
       <div className="h-64 overflow-y-auto border rounded p-2 mb-2 bg-gray-50">
         {messages.length === 0 && (
-          <div className="text-gray-400">Empieza la conversación...</div>
+          <div className="text-gray-400">Start the conversation...</div>
         )}
         {messages.map((msg, idx) => (
           <div
@@ -103,7 +103,7 @@ const ChatWithAI: React.FC = () => {
                 msg.role === "user" ? "text-blue-600" : "text-fuchsia-600"
               }
             >
-              <b>{msg.role === "user" ? "Tú" : "IA"}:</b> {msg.content}
+              <b>{msg.role === "user" ? "You" : "AI"}:</b> {msg.content}
             </span>
           </div>
         ))}
@@ -115,7 +115,7 @@ const ChatWithAI: React.FC = () => {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           className="flex-1 border rounded px-2 py-1"
-          placeholder="Escribe tu pregunta..."
+          placeholder="Type your question..."
           disabled={loading}
         />
         <button
@@ -123,12 +123,12 @@ const ChatWithAI: React.FC = () => {
           className="bg-blue-500 text-white px-4 py-1 rounded disabled:opacity-50"
           disabled={loading || !input.trim() || !apiKey}
         >
-          {loading ? "Enviando..." : "Enviar"}
+          {loading ? "Sending..." : "Send"}
         </button>
       </div>
       {!apiKey && (
         <div className="text-red-500 mt-2">
-          No se encontró la API Key de OpenAI. Configúrala primero.
+          OpenAI API Key not found. Please configure it first.
         </div>
       )}
       {error && <div className="text-red-500 mt-2">{error}</div>}
