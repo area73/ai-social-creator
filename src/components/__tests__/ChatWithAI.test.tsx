@@ -41,24 +41,24 @@ describe("ChatWithAI", () => {
 
   it("renders and shows no API key warning", () => {
     render(<ChatWithAI />);
-    expect(screen.getByText(/No se encontró la API Key/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Escribe tu pregunta/i)).toBeEnabled();
-    expect(screen.getByRole("button", { name: /Enviar/i })).toBeDisabled();
+    expect(screen.getByText(/OpenAI API Key not found/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Type your question/i)).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Send/i })).toBeDisabled();
   });
 
   it("renders and allows sending a message", async () => {
     setApiKey();
     render(<ChatWithAI />);
-    const input = screen.getByPlaceholderText(/Escribe tu pregunta/i);
+    const input = screen.getByPlaceholderText(/Type your question/i);
     fireEvent.change(input, { target: { value: "Hello AI" } });
     expect(input).toHaveValue("Hello AI");
-    const button = screen.getByRole("button", { name: /Enviar/i });
+    const button = screen.getByRole("button", { name: /Send/i });
     expect(button).toBeEnabled();
     fireEvent.click(button);
     expect(button).toBeDisabled();
     await waitFor(() => {
-      expect(screen.getByText(/Tú:/)).toBeInTheDocument();
-      expect(screen.getByText(/IA:/)).toBeInTheDocument();
+      expect(screen.getByText(/You:/)).toBeInTheDocument();
+      expect(screen.getByText(/AI:/)).toBeInTheDocument();
     });
   });
 
@@ -67,12 +67,12 @@ describe("ChatWithAI", () => {
     const { sendMessageToOpenAI } = await import("../../utils/openaiClient");
     (sendMessageToOpenAI as any).mockRejectedValueOnce(new Error("fail"));
     render(<ChatWithAI />);
-    const input = screen.getByPlaceholderText(/Escribe tu pregunta/i);
+    const input = screen.getByPlaceholderText(/Type your question/i);
     fireEvent.change(input, { target: { value: "fail" } });
-    fireEvent.click(screen.getByRole("button", { name: /Enviar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Send/i }));
     await waitFor(() => {
       expect(
-        screen.getByText(/Error al conectar con OpenAI/i)
+        screen.getByText(/Error connecting to OpenAI/i)
       ).toBeInTheDocument();
     });
   });
@@ -80,14 +80,14 @@ describe("ChatWithAI", () => {
   it("disables send button when input is empty", () => {
     setApiKey();
     render(<ChatWithAI />);
-    const button = screen.getByRole("button", { name: /Enviar/i });
+    const button = screen.getByRole("button", { name: /Send/i });
     expect(button).toBeDisabled();
   });
 
   it("allows model selection", () => {
     setApiKey();
     render(<ChatWithAI />);
-    const select = screen.getByLabelText(/Modelo/i);
+    const select = screen.getByLabelText(/Model/i);
     fireEvent.change(select, { target: { value: "gpt-4" } });
     expect(select).toHaveValue("gpt-4");
   });
@@ -95,13 +95,13 @@ describe("ChatWithAI", () => {
   it("shows initial message when no conversation", () => {
     setApiKey();
     render(<ChatWithAI />);
-    expect(screen.getByText(/Empieza la conversación/i)).toBeInTheDocument();
+    expect(screen.getByText(/Start the conversation/i)).toBeInTheDocument();
   });
 
   it("handles JSON.parse error in localStorage gracefully", () => {
     // Simula un error de parseo
     window.localStorage.setItem("ai-social-creator-config", "invalid-json");
     render(<ChatWithAI />);
-    expect(screen.getByText(/No se encontró la API Key/i)).toBeInTheDocument();
+    expect(screen.getByText(/OpenAI API Key not found/i)).toBeInTheDocument();
   });
 });

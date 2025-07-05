@@ -32,7 +32,7 @@ describe("LinkedInPublisher", () => {
 
     expect(
       screen.getByText(
-        "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+        "You must connect your LinkedIn account first to publish."
       )
     ).toBeInTheDocument();
   });
@@ -59,16 +59,16 @@ describe("LinkedInPublisher", () => {
     // Wait for component to mount and show the form
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
 
-    expect(screen.getByText("Conectado con LinkedIn ✓")).toBeInTheDocument();
+    expect(screen.getByText("Connected to LinkedIn ✓")).toBeInTheDocument();
     expect(
-      screen.getByPlaceholderText("Escribe tu post aquí...")
+      screen.getByPlaceholderText("Write your post here...")
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Publicar en LinkedIn" })
+      screen.getByRole("button", { name: "Publish to LinkedIn" })
     ).toBeInTheDocument();
   });
 
@@ -93,13 +93,13 @@ describe("LinkedInPublisher", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
 
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     const publishButton = screen.getByRole("button", {
-      name: "Publicar en LinkedIn",
+      name: "Publish to LinkedIn",
     });
 
     // First add some text to enable the button
@@ -139,29 +139,29 @@ describe("LinkedInPublisher", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
 
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     const publishButton = screen.getByRole("button", {
-      name: "Publicar en LinkedIn",
+      name: "Publish to LinkedIn",
     });
 
     // Type some text
     fireEvent.change(textarea, { target: { value: "Test post content" } });
-    expect(screen.getByText("17 caracteres")).toBeInTheDocument();
+    expect(screen.getByText("17 characters")).toBeInTheDocument();
 
     // Click publish
     fireEvent.click(publishButton);
 
     // Check loading state
-    expect(screen.getByText("Publicando...")).toBeInTheDocument();
+    expect(screen.getByText("Publishing...")).toBeInTheDocument();
 
     // Wait for success message
     await waitFor(() => {
       expect(
-        screen.getByText("¡Post publicado exitosamente en LinkedIn!")
+        screen.getByText("Post successfully published to LinkedIn!")
       ).toBeInTheDocument();
     });
 
@@ -208,13 +208,13 @@ describe("LinkedInPublisher", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
 
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     const publishButton = screen.getByRole("button", {
-      name: "Publicar en LinkedIn",
+      name: "Publish to LinkedIn",
     });
 
     // Type some text and publish
@@ -248,20 +248,20 @@ describe("LinkedInPublisher", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
 
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
 
     // Initially shows 0 characters
-    expect(screen.getByText("0 caracteres")).toBeInTheDocument();
+    expect(screen.getByText("0 characters")).toBeInTheDocument();
 
     // Type some text
     fireEvent.change(textarea, { target: { value: "Hello World!" } });
 
     // Character count should update
-    expect(screen.getByText("12 caracteres")).toBeInTheDocument();
+    expect(screen.getByText("12 characters")).toBeInTheDocument();
   });
 
   it("shows error if fetch throws", async () => {
@@ -280,17 +280,17 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     fireEvent.change(textarea, { target: { value: "Test post" } });
     fireEvent.click(
-      screen.getByRole("button", { name: "Publicar en LinkedIn" })
+      screen.getByRole("button", { name: "Publish to LinkedIn" })
     );
     await waitFor(() => {
       expect(
-        screen.getByText("Error publicando en LinkedIn")
+        screen.getByText("Error publishing to LinkedIn")
       ).toBeInTheDocument();
     });
   });
@@ -310,20 +310,18 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     const publishButton = screen.getByRole("button", {
-      name: "Publicar en LinkedIn",
+      name: "Publish to LinkedIn",
     });
     fireEvent.change(textarea, { target: { value: "   " } });
     fireEvent.click(publishButton);
     // Button should remain disabled and no error message should be shown
     expect(publishButton).toBeDisabled();
-    expect(
-      screen.queryByText("El texto no puede estar vacío")
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Text cannot be empty")).not.toBeInTheDocument();
   });
 
   it("shows error if token is missing at publish time", async () => {
@@ -344,20 +342,20 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
-    const textarea = screen.getByPlaceholderText("Escribe tu post aquí...");
+    const textarea = screen.getByPlaceholderText("Write your post here...");
     fireEvent.change(textarea, { target: { value: "Test post" } });
     // Remove token before publish
     token = undefined;
     fireEvent.click(
-      screen.getByRole("button", { name: "Publicar en LinkedIn" })
+      screen.getByRole("button", { name: "Publish to LinkedIn" })
     );
     // Should show the red error message
     await waitFor(() => {
       expect(
-        screen.getByText("Error publicando en LinkedIn")
+        screen.getByText("Error publishing to LinkedIn")
       ).toBeInTheDocument();
     });
   });
@@ -380,7 +378,7 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
     // Remove token and dispatch storage event
@@ -391,7 +389,7 @@ describe("LinkedInPublisher", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+          "You must connect your LinkedIn account first to publish."
         )
       ).toBeInTheDocument();
     });
@@ -415,7 +413,7 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
     // Remove token and dispatch custom event
@@ -424,7 +422,7 @@ describe("LinkedInPublisher", () => {
     await waitFor(() => {
       expect(
         screen.getByText(
-          "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+          "You must connect your LinkedIn account first to publish."
         )
       ).toBeInTheDocument();
     });
@@ -445,7 +443,7 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher initialText="Hello world!" />);
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: "Publicar en LinkedIn" })
+        screen.getByRole("heading", { name: "Publish to LinkedIn" })
       ).toBeInTheDocument();
     });
     expect(screen.getByDisplayValue("Hello world!")).toBeInTheDocument();
@@ -465,7 +463,7 @@ describe("LinkedInPublisher", () => {
     render(<LinkedInPublisher />);
     expect(
       screen.getByText(
-        "Debes conectar tu cuenta de LinkedIn primero para poder publicar."
+        "You must connect your LinkedIn account first to publish."
       )
     ).toBeInTheDocument();
   });
