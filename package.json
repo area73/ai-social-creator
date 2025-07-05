@@ -14,7 +14,7 @@
     "test:coverage:report": "open coverage/index.html"
   },
   "dependencies": {
-    "@area73/ai-web-key-configurator": "^1.0.14",
+    "@area73/ai-web-key-configurator": "^1.0.15",
     "@astrojs/react": "^4.3.0",
     "astro": "^5.10.2",
     "react": "^19.1.0",
